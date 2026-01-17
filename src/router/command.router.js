@@ -13,6 +13,14 @@ import { handleStart } from "../handlers/start.handler";
 import { handleReadingCommand } from "../handlers/reading.handler";
 import { sendUnknownCommand } from "../handlers/message.handler";
 
+export async function handleCommand(update, env) {
+  const message = update.message;
+  if (!message || !message.text) return;
+
+  // existing routing logic stays SAME
+
+  return true;
+}
 export async function routeCommand(message, ctx) {
   const text = message.text || "";
   const chatId = message.chat.id;
