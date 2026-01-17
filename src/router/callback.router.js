@@ -12,6 +12,14 @@
 import { handleReadingCallback } from "../handlers/reading.handler";
 import { sendComingSoon } from "../handlers/message.handler";
 
+export async function handleCallback(update, env) {
+  const callback = update.callback_query;
+  if (!callback) return;
+
+  // existing callback logic stays SAME
+
+  return true;
+}
 export async function routeCallback(query, ctx) {
   const action = query.data;
   const chatId = query.message.chat.id;
