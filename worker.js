@@ -1,47 +1,24 @@
-import { handleCommand } from "./src/routers/command.router.js";
-import { handleCallback } from "./src/routers/callback.router.js";
-import { sendMessage } from "./src/utils/telegram.js";
+import { handleCommand } from "./src/routers/command.router";
+import { handleCallback } from "./src/routers/callback.router";
 
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
     if (request.method !== "POST") {
-      return new Response("OK", { status: 200 });
+      return new Response("Bot is running ✅");
     }
 
-    let update;
-    try {
-      update = await request.json();
-    } catch {
-      return new Response("Invalid JSON", { status: 400 });
+    const update = await request.json();
+
+    // Inline button pressed
+    if (update.callback_query) {
+      return handleCallback(update, env);
     }
 
-    try {
-      // Telegram callback query (inline keyboard)
-      if (update.callback_query) {
-        await handleCallback(update, env);
-        return new Response("OK");
-      }
-
-      // Telegram message (text commands, buttons via /start etc)
-      if (update.message) {
-        await handleCommand(update, env);
-        return new Response("OK");
-      }
-
-      return new Response("Ignored update", { status: 200 });
-    } catch (err) {
-      console.error("Worker error:", err);
-
-      // optional safe fallback
-      if (update?.message?.chat?.id) {
-        await sendMessage(
-          env,
-          update.message.chat.id,
-          "⚠️ Temporary issue. Please try again."
-        );
-      }
-
-      return new Response("Error handled", { status: 200 });
+    // Normal message / command
+    if (update.message) {
+      return handleCommand(update, env);
     }
-  },
+
+    return new Response("OK");
+  }
 };
