@@ -1,32 +1,36 @@
 import { sendMessage } from "../utils/telegram.js";
-import { getMainKeyboard } from "../keyboards/master.keyboard.js";
 
 export async function handleCallback(update, env) {
-  const cb = update.callback_query;
-  const chatId = cb.message.chat.id;
-  const data = cb.data;
+  const query = update.callback_query;
+  const chatId = query.message.chat.id;
+  const data = query.data;
 
   if (data === "START_READING") {
-    await sendMessage(
+    return sendMessage(
       env,
       chatId,
-`📚 Reading STARTED ✅
-🕒 Start Time recorded
-🎯 Daily Target: 8 Hours
-
-🔥 Keep going Doctor 💪🦷`
+      "📚 Reading STARTED ✅\n🕒 Time tracking ON\n🎯 Daily Target: 8 Hours\n🔥 Keep going Doctor 💪🦷"
     );
   }
 
   if (data === "STOP_READING") {
-    await sendMessage(
+    return sendMessage(
       env,
       chatId,
-`⏸ Reading STOPPED ✅
-
-📊 Progress saved
-🌟 Consistency beats intensity!`
+      "⏸ Reading STOPPED ✅\n\n📊 Progress saved\n🌟 Consistency beats intensity!"
     );
+  }
+
+  if (data === "DAILY_TEST") {
+    return sendMessage(env, chatId, "📝 Daily Test will start soon ⏳");
+  }
+
+  if (data === "MCQ_PRACTICE") {
+    return sendMessage(env, chatId, "🧠 MCQ Practice mode coming soon");
+  }
+
+  if (data === "PROGRESS") {
+    return sendMessage(env, chatId, "📊 Progress dashboard loading...");
   }
 
   return new Response("OK");
