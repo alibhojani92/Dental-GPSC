@@ -6,7 +6,7 @@
 
 import { handleCommand } from "./src/router/command.router.js";
 import { handleCallback } from "./src/router/callback.router.js";
-import { sendMessage } from "./src/utils/telegram.js";
+import { sendMessage } from "./src/telegram.js";
 
 export default {
   async fetch(request, env, ctx) {
