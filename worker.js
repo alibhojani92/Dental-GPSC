@@ -1,24 +1,24 @@
-import { handleCommand } from "./src/routers/command.router";
-import { handleCallback } from "./src/routers/callback.router";
+import { handleCommand } from "./src/routers/command.router.js";
+import { handleCallback } from "./src/routers/callback.router.js";
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method !== "POST") {
-      return new Response("Bot is running ✅");
+      return new Response("GPSC Dental Bot Running ✅", { status: 200 });
     }
 
     const update = await request.json();
 
-    // Inline button pressed
+    // Inline keyboard clicks
     if (update.callback_query) {
       return handleCallback(update, env);
     }
 
-    // Normal message / command
+    // Text / command messages
     if (update.message) {
       return handleCommand(update, env);
     }
 
     return new Response("OK");
-  }
+  },
 };
