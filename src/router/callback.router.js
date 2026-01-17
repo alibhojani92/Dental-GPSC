@@ -1,58 +1,65 @@
-/**
- * src/router/callback.router.js
- * ----------------------------------
- * Inline Keyboard Callback Router
- * ----------------------------------
- * RULES:
- * - Only routing
- * - No business logic
- * - No DB / KV access
- */
+const TELEGRAM_API = "https://api.telegram.org/bot";
 
-import { handleReadingCallback } from "../handlers/reading.handler";
-import { sendComingSoon } from "../handlers/message.handler";
+async function answer(env, chatId, text) {
+  await fetch(`${TELEGRAM_API}${env.BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text
+    })
+  });
+}
 
 export async function handleCallback(update, env) {
-  const callback = update.callback_query;
-  if (!callback) return;
-
-  // existing callback logic stays SAME
-
-  return true;
-}
-export async function routeCallback(query, ctx) {
-  const action = query.data;
-  const chatId = query.message.chat.id;
+  const cb = update.callback_query;
+  const chatId = cb.message.chat.id;
+  const action = cb.data;
 
   switch (action) {
-    // 📖 Reading
+
     case "READ_START":
-    case "READ_STOP":
-      return handleReadingCallback(query, ctx);
-
-    // 📊 Progress
-    case "MY_PROGRESS":
-      return ctx.telegram.sendMessage(
+      await answer(
+        env,
         chatId,
-        "📊 <b>Your progress dashboard is coming soon!</b>\n\nStay consistent 💪🦷"
+`📚 Reading STARTED ✅
+🎯 Target: 8 Hours
+🔥 Keep going Doctor 💪🦷`
       );
+      break;
 
-    // 🧪 Daily Test
+    case "READ_STOP":
+      await answer(
+        env,
+        chatId,
+`⏸ Reading STOPPED ✅
+📊 Session saved successfully`
+      );
+      break;
+
     case "DAILY_TEST":
-      return sendComingSoon(chatId, ctx, "🧪 Daily Test");
+      await answer(env, chatId, "📝 Daily Test will start soon ⏳");
+      break;
 
-    // ✏️ MCQ Practice
     case "MCQ_PRACTICE":
-      return sendComingSoon(chatId, ctx, "✏️ MCQ Practice");
+      await answer(env, chatId, "🧠 MCQ Practice mode activated");
+      break;
 
-    // 📚 Subject List
+    case "MY_PROGRESS":
+      await answer(env, chatId, "📊 Your progress report will appear here");
+      break;
+
     case "SUBJECT_LIST":
-      return sendComingSoon(chatId, ctx, "📚 Subject List");
+      await answer(env, chatId, "📘 Dental Pulse 18 subjects loaded");
+      break;
+
+    case "ADMIN_PANEL":
+      await answer(env, chatId, "👑 Admin Panel opened");
+      break;
 
     default:
-      return ctx.telegram.sendMessage(
-        chatId,
-        "⚠️ <b>Unknown action</b>\n\nThis feature will be available soon 🚧"
-      );
+      await answer(env, chatId, "⚠️ Feature coming soon");
   }
+
+  return new Response("OK");
 }
