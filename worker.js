@@ -1,17 +1,19 @@
-import { handleTelegramUpdate } from "./src/telegram.js";
+import { handleUpdate } from "./src/telegram.js";
 
 export default {
   async fetch(request, env, ctx) {
     if (request.method !== "POST") {
-      return new Response("GPSC Bot is running 🚀", { status: 200 });
+      return new Response("GPSC Bot Active ✅", { status: 200 });
     }
 
+    const update = await request.json();
+
     try {
-      const update = await request.json();
-      return await handleTelegramUpdate(update, env);
+      await handleUpdate(update, env);
     } catch (err) {
-      console.error("Worker error:", err);
-      return new Response("Internal Error", { status: 500 });
+      console.error("Telegram Update Error:", err);
     }
-  },
+
+    return new Response("OK", { status: 200 });
+  }
 };
