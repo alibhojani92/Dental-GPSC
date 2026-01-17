@@ -1,38 +1,36 @@
 /**
- * ROOT ENTRY – Cloudflare Worker
- * ONLY ENTRY FILE
- * NO BUSINESS LOGIC
- * NO FEATURE LOGIC
+ * Cloudflare Worker – Telegram Webhook Entry
+ * SAFE MODE: never throws, always returns 200
  */
 
-import { handleCommand } from "./src/router/command.router.js";
-import { handleCallback } from "./src/router/callback.router.js";
+import { handleCommand } from "./router/command.router.js";
+import { handleCallback } from "./router/callback.router.js";
 
 export default {
   async fetch(request, env, ctx) {
-    if (request.method !== "POST") {
-      return new Response("OK", { status: 200 });
-    }
-
-    let update;
     try {
-      update = await request.json();
+      if (request.method !== "POST") {
+        return new Response("OK", { status: 200 });
+      }
+
+      const update = await request.json();
+
+      // Message (commands / text)
+      if (update.message) {
+        await handleCommand(update, env);
+      }
+
+      // Inline keyboard callback
+      if (update.callback_query) {
+        await handleCallback(update, env);
+      }
+
+      // Always respond 200 to Telegram
+      return new Response("OK", { status: 200 });
     } catch (err) {
-      return new Response("Invalid JSON", { status: 400 });
-    }
-
-    // MESSAGE COMMANDS
-    if (update.message) {
-      await handleCommand(update, env);
+      // 🔒 CRITICAL: never let Telegram see an error
+      console.error("Worker error:", err);
       return new Response("OK", { status: 200 });
     }
-
-    // CALLBACK QUERIES (INLINE KEYBOARD)
-    if (update.callback_query) {
-      await handleCallback(update, env);
-      return new Response("OK", { status: 200 });
-    }
-
-    return new Response("OK", { status: 200 });
-  },
+  }
 };
