@@ -1,63 +1,47 @@
-/**
- * =====================================================
- * GPSC DENTAL MASTER BOT – ENTRY WIRING ONLY
- * Cloudflare Workers
- *
- * IMPORTANT:
- * - This file ONLY connects existing logic
- * - NO feature code is changed
- * - All 27 files remain exactly as they are
- * =====================================================
- */
-
 import { handleCommand } from "./src/routers/command.router.js";
 import { handleCallback } from "./src/routers/callback.router.js";
+import { sendMessage } from "./src/utils/telegram.js";
 
-/**
- * Cloudflare Worker entry
- */
 export default {
   async fetch(request, env, ctx) {
-    // Health check (browser open)
-    if (request.method === "GET") {
-      return new Response("GPSC Dental Bot is LIVE ✅", { status: 200 });
-    }
-
-    // Telegram always sends POST updates
     if (request.method !== "POST") {
-      return new Response("Method Not Allowed", { status: 405 });
+      return new Response("OK", { status: 200 });
     }
 
     let update;
     try {
       update = await request.json();
-    } catch (e) {
+    } catch {
       return new Response("Invalid JSON", { status: 400 });
     }
 
     try {
-      // =============================
-      // MESSAGE HANDLING
-      // =============================
-      if (update.message) {
-        await handleCommand(update, env);
-        return new Response("OK", { status: 200 });
-      }
-
-      // =============================
-      // CALLBACK (INLINE KEYBOARD)
-      // =============================
+      // Telegram callback query (inline keyboard)
       if (update.callback_query) {
         await handleCallback(update, env);
-        return new Response("OK", { status: 200 });
+        return new Response("OK");
       }
 
-      // Unknown update type
-      return new Response("IGNORED", { status: 200 });
+      // Telegram message (text commands, buttons via /start etc)
+      if (update.message) {
+        await handleCommand(update, env);
+        return new Response("OK");
+      }
 
+      return new Response("Ignored update", { status: 200 });
     } catch (err) {
-      console.error("Worker Error:", err);
-      return new Response("Internal Error", { status: 500 });
+      console.error("Worker error:", err);
+
+      // optional safe fallback
+      if (update?.message?.chat?.id) {
+        await sendMessage(
+          env,
+          update.message.chat.id,
+          "⚠️ Temporary issue. Please try again."
+        );
+      }
+
+      return new Response("Error handled", { status: 200 });
     }
   },
 };
