@@ -1,45 +1,48 @@
 /**
- * ROOT ENTRY — Cloudflare Worker
- * ONLY job:
- *  - Receive Telegram webhook
- *  - Forward update to router
- *  - Never crash
+ * ROOT ENTRY – worker.js
+ * ======================
+ * SINGLE ENTRY POINT
+ * USES EXISTING 27-FILE STRUCTURE
+ * NO FEATURE LOSS
  */
 
+import { TELEGRAM } from "./src/telegram.js";
 import { handleCommand } from "./src/router/command.router.js";
 import { handleCallback } from "./src/router/callback.router.js";
-import { createTelegramClient } from "./src/telegram.js";
 
 export default {
   async fetch(request, env, ctx) {
-    try {
-      // Only POST from Telegram
-      if (request.method !== "POST") {
-        return new Response("OK", { status: 200 });
-      }
-
-      const update = await request.json();
-
-      // Attach telegram client once
-      env.TELEGRAM = createTelegramClient(env.BOT_TOKEN);
-
-      // Message (commands, text)
-      if (update.message) {
-        await handleCommand(update, env);
-        return new Response("OK", { status: 200 });
-      }
-
-      // Callback query (inline keyboard)
-      if (update.callback_query) {
-        await handleCallback(update, env);
-        return new Response("OK", { status: 200 });
-      }
-
-      return new Response("OK", { status: 200 });
-    } catch (err) {
-      // 🔥 NEVER let worker crash
-      console.error("WORKER ERROR:", err);
+    if (request.method !== "POST") {
       return new Response("OK", { status: 200 });
     }
-  },
+
+    let update;
+    try {
+      update = await request.json();
+    } catch (e) {
+      return new Response("Invalid JSON", { status: 400 });
+    }
+
+    // Attach env to telegram client
+    env.TELEGRAM = TELEGRAM(env);
+
+    try {
+      // CALLBACK QUERY (INLINE KEYBOARD)
+      if (update.callback_query) {
+        await handleCallback(update, env);
+        return new Response("OK");
+      }
+
+      // MESSAGE / COMMAND
+      if (update.message) {
+        await handleCommand(update, env);
+        return new Response("OK");
+      }
+
+      return new Response("IGNORED", { status: 200 });
+    } catch (err) {
+      console.error("Worker error:", err);
+      return new Response("ERROR", { status: 500 });
+    }
+  }
 };
