@@ -1,19 +1,17 @@
-import { routeMessage } from "./handlers/message.handler.js";
+export async function sendMessage(env, chatId, text, replyMarkup = null) {
+  const payload = {
+    chat_id: chatId,
+    text,
+    parse_mode: "HTML",
+  };
 
-export async function sendMessage(token, chatId, text, extra = {}) {
-  const url = `https://api.telegram.org/bot${token}/sendMessage`;
-  await fetch(url, {
+  if (replyMarkup) {
+    payload.reply_markup = replyMarkup;
+  }
+
+  await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: "HTML",
-      ...extra
-    })
+    body: JSON.stringify(payload),
   });
-}
-
-export async function handleUpdate(update, env) {
-  return routeMessage(update, env);
 }
