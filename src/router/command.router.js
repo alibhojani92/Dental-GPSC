@@ -1,53 +1,32 @@
-import { mainKeyboard } from "../ui/master.keyboard";
-
-const TELEGRAM_API = "https://api.telegram.org/bot";
-
-async function sendMessage(env, chatId, text, keyboard) {
-  await fetch(`${TELEGRAM_API}${env.BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      reply_markup: keyboard
-    })
-  });
-}
+import { sendMessage } from "../utils/telegram.js";
+import { getMainKeyboard } from "../keyboards/master.keyboard.js";
 
 export async function handleCommand(update, env) {
   const msg = update.message;
   const chatId = msg.chat.id;
   const text = msg.text || "";
 
-  const isAdmin = chatId === Number(env.ADMIN_ID);
-
-  // /start command
-  if (text.startsWith("/start")) {
-    const welcome = 
+  // /start OR Start button
+  if (text === "/start" || text === "📚 Start Reading") {
+    await sendMessage(env, chatId,
 `🌺 Dr. Arzoo Fatema 🌺
 
-Welcome Doctor ❤️🦷  
-Prepare confidently for  
+Welcome Doctor ❤️🦷
+This bot will help you prepare for
 🎯 GPSC Dental Class-2 Exam
 
-👇 Use buttons below to continue`;
-
-    await sendMessage(
-      env,
-      chatId,
-      welcome,
-      mainKeyboard(isAdmin)
+👇 Use buttons below`,
+      getMainKeyboard()
     );
-
     return new Response("OK");
   }
 
-  // Unknown text → show menu again
+  // Fallback (no spam)
   await sendMessage(
     env,
     chatId,
-    "ℹ️ Please use the buttons below 👇",
-    mainKeyboard(isAdmin)
+    "⚠️ Feature coming soon.\nPlease use buttons below 👇",
+    getMainKeyboard()
   );
 
   return new Response("OK");
